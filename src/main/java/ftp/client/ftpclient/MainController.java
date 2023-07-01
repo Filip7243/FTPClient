@@ -6,10 +6,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.FileChooser;
 
@@ -40,18 +37,18 @@ public class MainController {
     private TableColumn<UploadedFile, String> dateCol;
 
     @FXML
-    private TableColumn<String, Button> downloadCol;
-
-    @FXML
     private Button uploadBtn;
 
     @FXML
     private Button downloadBtn;
 
     @FXML
+    private Button deleteBtn;
+
+    @FXML
     private Label welcomeLabel;
 
-    private static final List<String> availableExtensions = List.of(".jpg", ".png", ".jpeg", ".txt");
+    private static final List<String> availableExtensions = List.of(".jpg", ".png", ".jpeg", ".txt", ".pdf");
 
     private Client client = LoggedInClient.getClient();
 
@@ -59,8 +56,11 @@ public class MainController {
 
     public void initialize() {
         welcomeLabel.setText("WELCOME " + client.getUsername().toUpperCase() + " TO YOUR ACCOUNT!");
+
         uploadBtn.setOnAction(this::onUploadClick);
         downloadBtn.setOnAction(this::onDownloadClick);
+        deleteBtn.setOnAction(this::onDeleteClick);
+
 
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
         extCol.setCellValueFactory(new PropertyValueFactory<>("extension"));
@@ -78,52 +78,70 @@ public class MainController {
         File fileToUpload = fileChooser.showOpenDialog(scene.getWindow());
 
         if (fileToUpload != null) {
-            String fileName = fileToUpload.getName();  // this is the name with extension
-            String extension = fileName.substring(fileName.lastIndexOf("."));
-
-            if (availableExtensions.contains(extension)) {
-                try {
-                    FileInputStream fileInputStream = new FileInputStream(fileToUpload.getAbsolutePath());
-                    DataOutputStream dataOutputStream = client.getDataOutputStream();
-
-                    byte[] fileNameBytes = fileName.getBytes();
-
-                    byte[] fileContent = new byte[(int) fileToUpload.length()];
-                    fileInputStream.read(fileContent);  // now we have our file in this stream
-                    fileInputStream.close();
-
-                    dataOutputStream.writeInt(fileNameBytes.length);  // we are telling server size of sending data
-                    dataOutputStream.write(fileNameBytes);
-
-                    dataOutputStream.writeInt(fileContent.length);
-                    dataOutputStream.write(fileContent);
-
-                    ArrayList<UploadedFile> clientFiles = client.getClientFiles();
-                    String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf("."));
-                    clientFiles.add(new UploadedFile(clientFiles.size(), fileNameWithoutExtension, extension,
-                            (double) fileToUpload.length() / 1024,
-                            Files.readAttributes(Path.of(fileToUpload.getPath()), BasicFileAttributes.class).lastModifiedTime().toString()));
-
-                    obs.setAll(clientFiles);
-                    filesTable.setItems(obs);
-
-                    // TODO: pozamykac streamy
-                } catch (IOException e) {
-                    System.out.println(e.getMessage());
-                }
-            }
+            uploadFile(fileToUpload);
         } else {
-            // TODO: validation/errors
+            System.out.println("Something went wrong!");
         }
 
+    }
+
+    private void uploadFile(File fileToUpload) {
+        String fileName = fileToUpload.getName();  // this is the name with extension
+        String extension = fileName.substring(fileName.lastIndexOf("."));
+
+        if (availableExtensions.contains(extension)) {
+            try {
+                client.sendUploadCommand();
+                FileInputStream fileInputStream = new FileInputStream(fileToUpload.getAbsolutePath());
+                DataOutputStream dataOutputStream = client.getDataOutputStream();
+
+                byte[] fileNameBytes = fileName.getBytes();
+                byte[] fileContent = new byte[(int) fileToUpload.length()];
+
+                fileInputStream.read(fileContent);  // now we have our file in this stream
+                fileInputStream.close();
+
+                dataOutputStream.writeInt(fileNameBytes.length);  // we are telling server size of sending data
+                dataOutputStream.write(fileNameBytes);
+
+                dataOutputStream.writeInt(fileContent.length);
+                dataOutputStream.write(fileContent);
+
+                ArrayList<UploadedFile> clientFiles = client.getClientFiles();
+                clientFiles.add(new UploadedFile(clientFiles.size(), fileName, extension,
+                        (double) fileToUpload.length() / 1024,
+                        Files.readAttributes(Path.of(fileToUpload.getPath()), BasicFileAttributes.class).lastModifiedTime().toString()));
+
+                obs.setAll(clientFiles);
+                filesTable.setItems(obs);
+
+                Alert a = new Alert(Alert.AlertType.INFORMATION);
+                a.setTitle("Upload success");
+                a.setContentText("File uploaded!");
+                a.show();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 
     private void onDownloadClick(ActionEvent event) {
         UploadedFile selectedItem = filesTable.getSelectionModel().getSelectedItem();
 
         if (selectedItem != null) {
-            System.out.println(selectedItem.getId());
+            client.sendDownloadCommand(selectedItem.getName());
+            System.out.println(selectedItem.getName());
         }
     }
 
+    private void onDeleteClick(ActionEvent event) {
+        UploadedFile selectedItem = filesTable.getSelectionModel().getSelectedItem();
+
+        if (selectedItem != null) {
+            client.sendDeleteCommand(selectedItem.getName());
+            obs.remove(selectedItem);
+            filesTable.refresh();
+            System.out.println("Selectd item" + selectedItem.getName());
+        }
+    }
 }

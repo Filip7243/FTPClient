@@ -6,10 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -44,10 +41,11 @@ public class LoginController {
         String password = passwordInput.getText();
 
         try {
-            Socket socket = new Socket(host, 21);
-            Client client = new Client(socket, username);
+            Socket controlSocket = new Socket(host, 21);
+            Socket dataSocket = new Socket(host, 20);
+            Client client = new Client(controlSocket, dataSocket, username);
             client.login(username, password);
-            client.listenForLoginResponse();
+            client.listenForResponse();
 
             // waiting for server response
             while (client.isLoggedIn() == null) {
@@ -57,19 +55,23 @@ public class LoginController {
             // when response received
             if (client.isLoggedIn()) {
                 LoggedInClient.setClient(client);
+                client.sendListCommand();
 
                 FXMLLoader loader = new FXMLLoader(HelloApplication.class.getResource("main-view.fxml"));
                 Parent root = loader.load();
                 Stage stage = new Stage();
                 stage.setScene(new Scene(root, 600, 400));
                 stage.show();
+                Alert a = new Alert(Alert.AlertType.INFORMATION);
+                a.setTitle("Successfully LoggedIn");
+                a.setContentText("You are logged in!");
+                a.show();
                 ((Node) (event.getSource())).getScene().getWindow().hide();
             } else {
                 showErrorLabel("Invalid Credentials!");
             }
 
         } catch (IOException e) {
-            // TODO: jakiś regex do adresu IP
             String[] msg = e.getMessage().split(":");
             showErrorLabel(msg[0]);
             e.printStackTrace();
@@ -84,5 +86,4 @@ public class LoginController {
             errorLabel.setVisible(true);
         }
     }
-
 }

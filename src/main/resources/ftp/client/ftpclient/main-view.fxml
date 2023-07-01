@@ -30,8 +30,9 @@
                 </TableView>
             <HBox alignment="CENTER" prefHeight="42.0" prefWidth="560.0" spacing="25.0">
                <children>
-                      <Button fx:id="uploadBtn" mnemonicParsing="false" prefHeight="26.0" prefWidth="230.0" text="Upload File" />
-                  <Button fx:id="downloadBtn" mnemonicParsing="false" prefWidth="230.0" text="Download" />
+                      <Button fx:id="uploadBtn" mnemonicParsing="false" prefHeight="26.0" prefWidth="160.0" text="Upload File" />
+                  <Button fx:id="downloadBtn" mnemonicParsing="false" prefWidth="160.0" text="Download" />
+                  <Button fx:id="deleteBtn" mnemonicParsing="false" prefWidth="160.0" text="DELETE" />
                </children>
             </HBox>
             </children>
