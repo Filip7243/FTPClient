@@ -48,7 +48,7 @@ public class MainController {
     @FXML
     private Label welcomeLabel;
 
-    private static final List<String> availableExtensions = List.of(".jpg", ".png", ".jpeg", ".txt", ".pdf");
+    private static final List<String> availableExtensions = List.of(".jpg", ".png", ".jpeg", ".txt", ".pdf", ".iso");
 
     private Client client = LoggedInClient.getClient();
 
@@ -122,6 +122,11 @@ public class MainController {
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
+        } else {
+            Alert a = new Alert(Alert.AlertType.ERROR);
+            a.setTitle("Can't upload file");
+            a.setContentText("You can't upload this file!");
+            a.show();
         }
     }
 

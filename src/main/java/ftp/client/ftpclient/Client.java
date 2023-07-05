@@ -123,12 +123,11 @@ public class Client {
                             }
 
                             if (responseCode.contains("Transfer Completed")) {  // file download
-                                System.out.println("TUTAJ JESTM!!!!");
                                 int fileNameLength = dataInputStream.readInt();
 
                                 if (fileNameLength > 0) {
                                     byte[] fileNameBytes = new byte[fileNameLength];
-                                    dataInputStream.readFully(fileNameBytes, 0, fileNameLength);  // we read whole file
+                                    dataInputStream.readFully(fileNameBytes, 0, fileNameLength);
                                     String fileName = new String(fileNameBytes);
                                     String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 

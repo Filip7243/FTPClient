@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 
 public class LoginController {
@@ -41,8 +42,8 @@ public class LoginController {
         String password = passwordInput.getText();
 
         try {
-            Socket controlSocket = new Socket(host, 21);
-            Socket dataSocket = new Socket(host, 20);
+            Socket controlSocket = new Socket("192.168.88.87", 21);
+            Socket dataSocket = new Socket("192.168.88.87", 20);
             Client client = new Client(controlSocket, dataSocket, username);
             client.login(username, password);
             client.listenForResponse();
